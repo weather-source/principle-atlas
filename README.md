@@ -7,6 +7,9 @@
 ## 文章列表
 
 - [声音是怎么变成 MP3 的](articles/sound-to-mp3.html) —— 采样、量化、有损压缩，3 个交互演示
+- [一张图片是怎么被压缩的](articles/image-compression.html) —— 色度抽样、DCT 分块量化，2 个交互演示（含迷你 JPEG 编码器）
+- [手机是怎么知道你在哪的](articles/gps-positioning.html) —— 距离=速度×时间、三球交汇、时钟校准，1 个可拖拽演示
+- [浏览器和你说的悄悄话，是怎么保密的](articles/https-encryption.html) —— 对称加密与 Diffie–Hellman 密钥交换，2 个交互演示
 
 ## 技术说明
 
@@ -30,7 +33,10 @@ principle-atlas/
 ├── assets/
 │   └── style.css               # 全站样式
 └── articles/
-    └── sound-to-mp3.html       # 第一期：数字音频
+    ├── sound-to-mp3.html       # 第一期：数字音频
+    ├── image-compression.html  # 第二期：图像压缩
+    ├── gps-positioning.html    # 第三期：卫星定位
+    └── https-encryption.html   # 第四期：网络加密
 ```
 
 ## License

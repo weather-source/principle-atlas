@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手机是怎么知道你在哪的 · 原理图鉴</title>
+<meta name="description" content="不出门一步，手机怎么算出你在哪？距离=速度×时间、三球交汇、时钟校准——一个可拖拽的交互演示看懂 GPS。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111111'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="../index.html">← 原理<em>图鉴</em></a>
+  </div>
+</header>
+
+<main class="container article-body">
+  <p class="article-kicker">第三期 · 卫星定位</p>
+  <h1 class="article-title">手机是怎么知道你在哪的</h1>
+  <p class="article-lead">你站在地球的任何一个角落，几颗两万公里外的卫星就能把你的位置算到五米以内。整个过程没有魔法，只用了一条初中物理公式和一个几何常识——外加一场人类历史上最大规模的精密对表。</p>
+  <p class="article-meta">1 个可拖拽交互演示 · 阅读约 8 分钟 · 所有演示在本地运行</p>
+
+  <h2><span class="sec-no">一</span>天上有 24 个"电台"，循环播报两句话</h2>
+  <p>GPS 系统在两万公里的高空布置了约 24 颗工作卫星。每一颗都是一个小广播电台，不知疲倦地重复播报两条信息：<b>"我是几号卫星"</b>，以及——关键来了——<b>"我发出这条消息的时刻是几点几分几秒几微秒"</b>。每条信号上都盖着一个精确的时间戳。</p>
+  <figure>
+    <svg viewBox="0 0 680 170" role="img" aria-label="卫星广播示意图">
+      <g transform="translate(120,60)">
+        <rect x="-26" y="-14" width="52" height="28" rx="4" fill="#111"/>
+        <rect x="-52" y="-8" width="22" height="16" fill="#8a8a8a"/>
+        <rect x="30" y="-8" width="22" height="16" fill="#8a8a8a"/>
+        <text x="0" y="5" text-anchor="middle" font-size="12" fill="#fff">SV-7</text>
+      </g>
+      <path d="M170 60 C 300 20 400 20 530 55" fill="none" stroke="#a8a8a8" stroke-width="1.5" stroke-dasharray="3 5"/>
+      <path d="M524 48 L534 57 L522 61" fill="none" stroke="#a8a8a8" stroke-width="1.5"/>
+      <g transform="translate(555,70)">
+        <rect x="-12" y="-20" width="24" height="40" rx="5" fill="#fff" stroke="#111" stroke-width="1.5"/>
+        <line x1="-7" y1="-13" x2="7" y2="-13" stroke="#111" stroke-width="1.5"/>
+        <circle cx="0" cy="6" r="3" fill="#111"/>
+      </g>
+      <text x="120" y="110" text-anchor="middle" font-size="13" fill="#7a7a7a">"我是 7 号卫星，现在是 12:00:00.000031"</text>
+      <text x="120" y="130" text-anchor="middle" font-size="13" fill="#7a7a7a">（每颗卫星都带一台原子钟）</text>
+    </svg>
+    <figcaption>卫星的全部工作就是报时。它播的每一句话里最重要的不是内容，而是"这句话离开我的精确时刻"。</figcaption>
+  </figure>
+
+  <h2><span class="sec-no">二</span>一条初中公式，量出两万公里</h2>
+  <p>手机收到信号后看一眼表：消息盖戳的时刻是 12:00:00.000000，现在我的表显示 12:00:00.067——信号在路上走了 <b>0.067 秒</b>。而电磁波的速度就是光速，每秒约 30 万公里。于是：</p>
+  <p style="text-align:center;font-family:var(--mono);font-size:17px;margin:26px 0;"><b>距离 = 光速 × 时间差 ≈ 300,000 km/s × 0.067s ≈ 20,100 km</b></p>
+  <p>这一步的精妙之处在于：<b>你什么都不用"看"，纯粹靠对表就量出了一段两万公里的距离</b>。误差多大？对表差 1 微秒，距离就差 300 公里——记住这个数字，第四节它是主角。</p>
+
+  <h2><span class="sec-no">三</span>一个距离只是一层"壳"，三个距离钉死一个点</h2>
+  <p>"我距 7 号卫星 20,100 公里"——这句话意味着你站在一个以卫星为球心、半径 20,100 公里的<b>球面</b>上。一个球面圈不住你，但三个球面就不同了：它们两两相交成圆弧，而三条弧线通常只会交于<b>一个点</b>。那个点，就是你。</p>
+  <p>下面是一张俯视示意图（球面在图上就成了圆圈）。<b>拖动黑色手机圆点</b>到任何位置——注意三个虚线圆永远同时穿过它：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 · 三球交汇定位（可拖拽）</p>
+    <p class="demo-sub">拖动黑色圆点（你的手机）；然后拖动"时钟误差"滑块，看看对表不准会发生什么</p>
+    <div class="demo-controls">
+      <label for="gpsSlider">接收端时钟误差</label>
+      <input type="range" id="gpsSlider" min="-300" max="300" value="0" step="10">
+      <span class="demo-value" id="gpsVal">0 km</span>
+    </div>
+    <svg id="gpsSvg" viewBox="0 0 680 400" style="touch-action:none;cursor:crosshair;">
+      <rect x="0" y="0" width="680" height="400" fill="none"/>
+      <line x1="0" y1="200" x2="680" y2="200" stroke="#efefef" stroke-width="1"/>
+      <line x1="340" y1="0" x2="340" y2="400" stroke="#efefef" stroke-width="1"/>
+      <circle id="gc0" fill="none" stroke="#111" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <circle id="gc1" fill="none" stroke="#777" stroke-width="1.5" stroke-dasharray="2 4"/>
+      <circle id="gc2" fill="none" stroke="#aaa" stroke-width="1.5" stroke-dasharray="8 4"/>
+      <g transform="translate(120,66)">
+        <rect x="-20" y="-11" width="40" height="22" rx="3" fill="#111"/>
+        <rect x="-40" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <rect x="23" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <text x="0" y="-22" text-anchor="middle" font-size="12" fill="#7a7a7a">卫星 1</text>
+      </g>
+      <g transform="translate(566,74)">
+        <rect x="-20" y="-11" width="40" height="22" rx="3" fill="#111"/>
+        <rect x="-40" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <rect x="23" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <text x="0" y="-22" text-anchor="middle" font-size="12" fill="#7a7a7a">卫星 2</text>
+      </g>
+      <g transform="translate(340,356)">
+        <rect x="-20" y="-11" width="40" height="22" rx="3" fill="#111"/>
+        <rect x="-40" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <rect x="23" y="-6" width="17" height="12" fill="#8a8a8a"/>
+        <text x="0" y="30" text-anchor="middle" font-size="12" fill="#7a7a7a">卫星 3</text>
+      </g>
+      <g id="gpsPhone">
+        <circle id="phoneDot" cx="340" cy="180" r="8" fill="#111" stroke="#fff" stroke-width="2"/>
+        <text id="phoneLabel" x="340" y="207" text-anchor="middle" font-size="12" fill="#111">手机</text>
+      </g>
+    </svg>
+    <p class="size-label" id="gpsInfo"></p>
+    <p class="demo-note">误差为零时，三个圆的交点就是你拖到的地方。但把时钟误差拖到 <b>±100km</b> 以上再看看：三个圆怎么都不肯交在同一点了——因为每台手机里的时钟误差<b>不一样且未知</b>，量出来的三个距离全部"虚胖"或"缩水"。手机解决办法简单粗暴：<b>把时间也当成未知数一起解</b>。三个未知坐标 + 一个未知时间 = 4 个未知数，所以现实中 GPS 至少要同时收到 <b>4 颗卫星</b>的信号才能定位——第 4 颗卫星不是用来"更准"，是用来"对表"的。</p>
+  </div>
+
+  <h2><span class="sec-no">四</span>拼起来</h2>
+  <table class="compare">
+    <tr><th>环节</th><th>谁在做</th><th>精度要求</th></tr>
+    <tr><td>报时</td><td>卫星原子钟（误差每天百万分之一秒）</td><td>纳秒级</td></tr>
+    <tr><td>收信号、算时间差</td><td>你的手机</td><td>微秒级都不够看，得靠第 4 颗星救</td></tr>
+    <tr><td>三球（四球）交汇解方程</td><td>你的手机</td><td>解出 3 个坐标 + 1 个时间</td></tr>
+    <tr><td>输出位置</td><td>你的手机</td><td>约 5 米 ≈ 时间误差仅 17 纳秒</td></tr>
+  </table>
+  <p>最后感受一下这个数字：定位准到 5 米，换算成时间只有 <b>17 纳秒</b>——相当于这段时间里光只走了 5 米。所以有人说过：GPS 与其说是定位系统，不如说是<b>人类建过的最大的时钟校准网络</b>。你每次打开导航，都是在和太空里的原子钟一起做一场精密的物理实验。</p>
+
+  <nav class="article-nav">
+    <a href="image-compression.html">← 上一篇：一张图片是怎么被压缩的</a>
+    <a href="https-encryption.html">下一篇：浏览器和你说的悄悄话，是怎么保密的 →</a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>原理图鉴 · 交互式科普</p>
+    <p>纯静态站点，所有演示在浏览器本地运行。</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var SATS=[[120,66],[566,74],[340,356]];
+  var KM_PER_PX=40, C=299792.458;
+  var phone={x:340,y:180};
+  var svg=document.getElementById('gpsSvg');
+  var dot=document.getElementById('phoneDot');
+  var label=document.getElementById('phoneLabel');
+  var circles=[document.getElementById('gc0'),document.getElementById('gc1'),document.getElementById('gc2')];
+  var slider=document.getElementById('gpsSlider');
+  function svgPoint(evt){
+    var pt=svg.createSVGPoint();
+    pt.x=evt.clientX; pt.y=evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  var dragging=false;
+  function movePhone(evt){
+    var p=svgPoint(evt);
+    phone.x=Math.max(30,Math.min(650,p.x));
+    phone.y=Math.max(30,Math.min(370,p.y));
+    update();
+  }
+  svg.addEventListener('pointerdown',function(e){dragging=true;svg.setPointerCapture(e.pointerId);movePhone(e);});
+  svg.addEventListener('pointermove',function(e){if(dragging)movePhone(e);});
+  svg.addEventListener('pointerup',function(){dragging=false;});
+  function update(){
+    var errKm=+slider.value;
+    document.getElementById('gpsVal').textContent=errKm+' km';
+    dot.setAttribute('cx',phone.x); dot.setAttribute('cy',phone.y);
+    label.setAttribute('x',phone.x); label.setAttribute('y',phone.y+27);
+    var info=[];
+    for(var i=0;i<3;i++){
+      var dx=phone.x-SATS[i][0], dy=phone.y-SATS[i][1];
+      var dPx=Math.sqrt(dx*dx+dy*dy);
+      var dKm=dPx*KM_PER_PX+errKm;
+      var rPx=Math.max(dKm,0)/KM_PER_PX;
+      circles[i].setAttribute('cx',SATS[i][0]);
+      circles[i].setAttribute('cy',SATS[i][1]);
+      circles[i].setAttribute('r',rPx.toFixed(1));
+      var tMs=dKm/C*1000;
+      info.push('卫星'+(i+1)+' '+Math.round(dKm).toLocaleString()+'km · '+tMs.toFixed(1)+'ms');
+    }
+    var status;
+    if(errKm===0){
+      status='三个圆恰好交于一点——这个点就是你的位置';
+    }else{
+      status='距离全部偏差 '+Math.abs(errKm)+'km —— 三个圆无法交于一点，必须把"时间"也当未知数解出来（所以需要第 4 颗卫星）';
+    }
+    document.getElementById('gpsInfo').textContent=info.join('　|　')+'　　'+status;
+  }
+  slider.addEventListener('input',update);
+  update();
+})();
+</script>
+</body>
+</html>

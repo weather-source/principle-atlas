@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一张图片是怎么被压缩的 · 原理图鉴</title>
+<meta name="description" content="JPEG 为什么总在细节处糊掉？色度抽样、8×8 分块、频率丢弃——两个交互演示看懂图片压缩的全部秘密。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111111'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="../index.html">← 原理<em>图鉴</em></a>
+  </div>
+</header>
+
+<main class="container article-body">
+  <p class="article-kicker">第二期 · 图像压缩</p>
+  <h1 class="article-title">一张图片是怎么被压缩的</h1>
+  <p class="article-lead">手机随手一拍就是几张 MB。可你有没有想过：为什么存成 JPEG 后体积缩小十倍，照片看起来却几乎没变？这篇文章让你亲手"压"一张图，看着它一点点变得粗糙，搞懂压缩率与画质之间那笔交易是怎么谈的。</p>
+  <p class="article-meta">2 个交互演示 · 阅读约 8 分钟 · 所有演示在本地运行</p>
+
+  <h2><span class="sec-no">一</span>一张图，就是一大堆数字</h2>
+  <p>把照片放大再放大，你会看到一个个小方块——像素。每个像素由三个数字描述：<b>红、绿、蓝各占多少</b>（0~255）。一张 1920×1080 的照片，就是 207 万个像素 × 3 个数字 ≈ <b>620 万个数字</b>。存成原始格式（BMP），一个数字都不少，这就是它那么大的原因。</p>
+  <figure>
+    <svg viewBox="0 0 680 200" role="img" aria-label="像素网格示意图">
+      <g>
+        <rect x="20" y="40" width="120" height="120" fill="none" stroke="#111" stroke-width="1.5"/>
+        <rect x="20" y="40" width="120" height="120" fill="#d8d8d8"/>
+        <circle cx="80" cy="90" r="26" fill="#8a8a8a"/>
+        <text x="80" y="186" text-anchor="middle" font-size="13" fill="#7a7a7a">你看到的照片</text>
+      </g>
+      <path d="M180 100 L260 100" stroke="#111" stroke-width="1.5"/>
+      <path d="M250 94 L260 100 L250 106" fill="none" stroke="#111" stroke-width="1.5"/>
+      <text x="220" y="86" text-anchor="middle" font-size="13" fill="#7a7a7a">放大</text>
+      <g>
+        <rect x="290" y="40" width="120" height="120" fill="#d8d8d8" stroke="#111" stroke-width="1.5"/>
+        <path d="M310 40 V160 M330 40 V160 M350 40 V160 M370 40 V160 M390 40 V160 M290 60 H410 M290 80 H410 M290 100 H410 M290 120 H410 M290 140 H410" stroke="#bbbbbb" stroke-width="1"/>
+        <circle cx="350" cy="100" r="30" fill="#8a8a8a"/>
+        <text x="350" y="186" text-anchor="middle" font-size="13" fill="#7a7a7a">计算机眼里的像素格</text>
+      </g>
+      <path d="M440 100 L520 100" stroke="#111" stroke-width="1.5"/>
+      <path d="M510 94 L520 100 L510 106" fill="none" stroke="#111" stroke-width="1.5"/>
+      <g font-family="ui-monospace,Consolas,monospace" font-size="12" fill="#555">
+        <text x="545" y="62">[188, 186, 201]</text>
+        <text x="545" y="84">[190, 184, 198]</text>
+        <text x="545" y="106">[185, 190, 203]</text>
+        <text x="545" y="128">[190, 188, 199]</text>
+        <text x="545" y="150">……</text>
+      </g>
+    </svg>
+    <figcaption>计算机眼里没有"照片"，只有一格一格的数字。相邻像素的数字往往非常接近——这个"接近"，就是压缩的切入点。</figcaption>
+  </figure>
+  <p>压缩的全部秘密只有一句话：<b>找规律，用更少的数字把"看起来一样"的图重新写出来。</b>JPEG 的聪明之处在于，它对"看起来一样"的标准定义得非常鸡贼——只要你的眼睛发现不了，它就敢删。</p>
+
+  <h2><span class="sec-no">二</span>第一个突破口：颜色可以打对折</h2>
+  <p>JPEG 干的第一件事，是把每个像素的三个数字换一种记账方式：不再记"红绿蓝各多少"，而是记"<b>亮度多少、颜色偏红还是偏绿、颜色偏黄还是偏蓝</b>"。为什么要换？因为人眼有个天生的弱点：</p>
+  <p><b>对亮度变化敏感，对颜色变化迟钝。</b>下面三张图完全相同的亮度细节，只是"颜色细节"被不同程度地平均掉了——看看你能不能看出差别：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 1 · 色度抽样</p>
+    <p class="demo-sub">三张图的亮度信息一模一样，只有颜色信息被不同程度地"合并 averaged"</p>
+    <div class="canvas-trio">
+      <div class="canvas-col"><canvas id="cs444"></canvas><p class="canvas-cap">4:4:4<br>颜色信息全保留</p></div>
+      <div class="canvas-col"><canvas id="cs422"></canvas><p class="canvas-cap">4:2:2<br>颜色横向减半</p></div>
+      <div class="canvas-col"><canvas id="cs420"></canvas><p class="canvas-cap">4:2:0<br>颜色横竖都减半（JPEG 常用）</p></div>
+    </div>
+    <p class="demo-note">盯着色条之间的边界看：抽样越狠，颜色互相"渗"得越厉害。但因为<b>亮度边缘</b>始终清晰，整体看起来差别不大——可颜色数据已经少了 75%。这就是第一笔省下的体积。</p>
+  </div>
+
+  <h2><span class="sec-no">三</span>第二个突破口：扔掉看不见的"频率"</h2>
+  <p>接下来，JPEG 把图切成一个个 <b>8×8 像素的小块</b>，对每块做一件神奇的事：把它拆成 64 种"粗细不同的波浪格子"的叠加——平滑的大色块是一种波，细密的纹理是另一种波。这叫 DCT 变换（离散余弦变换）。</p>
+  <p>拆开之后有个惊人的发现：<b>绝大多数小块，只靠前几个"波浪"就能拼个八九不离十</b>，剩下那几十个分量的数值小到可以忽略。把滑块往左拖，体验一下"只保留少量频率成分"是什么效果：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 2 · 亲手"压"一张图（迷你 JPEG 编码器）</p>
+    <p class="demo-sub">右图由每个 8×8 块只保留前 N 个频率分量重建而成——这就是 JPEG 压缩的核心步骤</p>
+    <div class="demo-controls">
+      <label for="jpegSlider">每块保留分量</label>
+      <input type="range" id="jpegSlider" min="1" max="64" value="6">
+      <span class="demo-value" id="jpegVal">6 / 64</span>
+    </div>
+    <div class="canvas-pair">
+      <canvas id="jpegSrc" width="256" height="256"></canvas>
+      <canvas id="jpegOut" width="256" height="256"></canvas>
+    </div>
+    <p class="canvas-cap">左：原图（程序生成） · 右：压缩后重建</p>
+    <p class="demo-note">拖到 <b>6/64</b> 左右：画质几乎无损，但每块 64 个数字只存 6 个——体积已经省下 90%。继续往左拖到 1~2，你会看到经典的"马赛克块"：每一块只剩下最基本的明暗分布，块与块接不上了。真实 JPEG 的"画质滑块"（保存时的质量选项）控制的正是这件事。</p>
+  </div>
+
+  <div class="callout"><b>呼应上一期：</b>是不是很眼熟？上一期 MP3 扔掉"听不见的频率"，这一期 JPEG 扔掉"看不见的频率"——所有有损压缩都是同一个哲学：<b>利用人类感官的漏洞，删掉你感知不到的部分。</b></div>
+
+  <h2><span class="sec-no">四</span>最后一步：把数字变短</h2>
+  <p>扔完该扔的，剩下的数字还有最后一点油水可榨：量化后的小块会产生大量的 <b>0</b>（被扔掉的分量的位置）。JPEG 按"之"字形顺序扫过每个块，把 64 个数字排成一串——0 会密密麻麻地连成长串，再用哈夫曼编码这类手段把"经常出现的东西"用更短的记号写。这一步<b>完全无损</b>，相当于把句子"零零零零零五"缩写成"五个零加一个五"。</p>
+
+  <h2><span class="sec-no">五</span>拼起来</h2>
+  <table class="compare">
+    <tr><th>阶段</th><th>做了什么</th><th>代价</th></tr>
+    <tr><td>颜色换账本</td><td>RGB 改记亮度 + 色度</td><td>无损，只是换个说法</td></tr>
+    <tr><td>色度抽样</td><td>颜色信息 4:2:0 减到 1/4</td><td>颜色边缘轻微渗色</td></tr>
+    <tr><td>8×8 DCT</td><td>每块拆成 64 个频率分量</td><td>无损变换</td></tr>
+    <tr><td>量化</td><td>高频分量四舍五入、大量归零</td><td><b>有损</b>，主战场</td></tr>
+    <tr><td>熵编码</td><td>之字形扫描 + 哈夫曼缩短记号</td><td>无损</td></tr>
+  </table>
+  <p>一条 1920×1080 的照片走完这条流水线：原始 BMP 约 <b>6.2MB</b>，JPEG 质量 85 只要 <b>350KB 左右</b>——缩小 18 倍，肉眼几乎无感。下次保存文件时你可以想想：截图、图表这类"色块分明"的图用 PNG（无损、不丢颜色边缘）；照片用 JPEG（反正人眼看不出它删了什么）。</p>
+
+  <nav class="article-nav">
+    <a href="sound-to-mp3.html">← 上一篇：声音是怎么变成 MP3 的</a>
+    <a href="gps-positioning.html">下一篇：手机是怎么知道你在哪的 →</a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>原理图鉴 · 交互式科普</p>
+    <p>纯静态站点，所有演示在浏览器本地运行。</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  /* ---------- 演示 1：色度抽样 ---------- */
+  var CW=192, CH=128;
+  function clamp255(v){return v<0?0:(v>255?255:Math.round(v));}
+  function stripeColor(x){
+    var k=Math.floor(x/3)%4;
+    return [[209,73,78],[93,168,94],[63,118,183],[238,236,230]][k];
+  }
+  var Y=new Float32Array(CW*CH),Cb=new Float32Array(CW*CH),Cr=new Float32Array(CW*CH);
+  var i,x,y;
+  for(y=0;y<CH;y++)for(x=0;x<CW;x++){
+    var rgb=stripeColor(x), idx=y*CW+x;
+    Y[idx]=0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2];
+    Cb[idx]=-0.168736*rgb[0]-0.331264*rgb[1]+0.5*rgb[2]+128;
+    Cr[idx]=0.5*rgb[0]-0.418688*rgb[1]-0.081312*rgb[2]+128;
+  }
+  function paint(id,cbArr,crArr){
+    var c=document.getElementById(id); c.width=CW; c.height=CH;
+    var ctx=c.getContext('2d'), im=ctx.createImageData(CW,CH), d=im.data;
+    for(i=0;i<CW*CH;i++){
+      var yy=Y[i], cb=cbArr[i], cr=crArr[i];
+      d[i*4]=clamp255(yy+1.402*(cr-128));
+      d[i*4+1]=clamp255(yy-0.344136*(cb-128)-0.714136*(cr-128));
+      d[i*4+2]=clamp255(yy+1.772*(cb-128));
+      d[i*4+3]=255;
+    }
+    ctx.putImageData(im,0,0);
+  }
+  paint('cs444',Cb,Cr);
+  var Cb2=new Float32Array(CW*CH),Cr2=new Float32Array(CW*CH);
+  for(y=0;y<CH;y++)for(x=0;x<CW;x+=2){
+    var a=y*CW+x, b=y*CW+x+1;
+    Cb2[a]=Cb2[b]=(Cb[a]+Cb[b])/2; Cr2[a]=Cr2[b]=(Cr[a]+Cr[b])/2;
+  }
+  paint('cs422',Cb2,Cr2);
+  var Cb4=new Float32Array(CW*CH),Cr4=new Float32Array(CW*CH);
+  for(y=0;y<CH;y+=2)for(x=0;x<CW;x+=2){
+    var p1=y*CW+x,p2=y*CW+x+1,p3=(y+1)*CW+x,p4=(y+1)*CW+x+1;
+    var ac=(Cb[p1]+Cb[p2]+Cb[p3]+Cb[p4])/4, ar=(Cr[p1]+Cr[p2]+Cr[p3]+Cr[p4])/4;
+    Cb4[p1]=Cb4[p2]=Cb4[p3]=Cb4[p4]=ac; Cr4[p1]=Cr4[p2]=Cr4[p3]=Cr4[p4]=ar;
+  }
+  paint('cs420',Cb4,Cr4);
+
+  /* ---------- 演示 2：迷你 JPEG（8×8 DCT） ---------- */
+  var S=256,NB=32;
+  var c8=[],al=[],uu,vv,xx,yy;
+  for(uu=0;uu<8;uu++){c8[uu]=[];for(xx=0;xx<8;xx++)c8[uu][xx]=Math.cos((2*xx+1)*uu*Math.PI/16);}
+  for(uu=0;uu<8;uu++)al[uu]=(uu===0)?Math.sqrt(0.125):0.5;
+  var order=[];
+  for(uu=0;uu<8;uu++)for(vv=0;vv<8;vv++)order.push([uu,vv]);
+  order.sort(function(a,b){return (a[0]+a[1])-(b[0]+b[1])||a[0]-b[0];});
+  var src=document.createElement('canvas');src.width=src.height=S;
+  var g=src.getContext('2d');
+  var gr=g.createLinearGradient(0,0,0,S);
+  gr.addColorStop(0,'#e8eef4');gr.addColorStop(0.6,'#f3efe6');gr.addColorStop(1,'#dfe4d5');
+  g.fillStyle=gr;g.fillRect(0,0,S,S);
+  g.fillStyle='#e9b44c';g.beginPath();g.arc(184,66,24,0,Math.PI*2);g.fill();
+  g.fillStyle='#8a9aa8';g.beginPath();g.moveTo(0,168);g.lineTo(78,86);g.lineTo(156,168);g.closePath();g.fill();
+  g.fillStyle='#5d6d7a';g.beginPath();g.moveTo(96,168);g.lineTo(186,104);g.lineTo(256,170);g.lineTo(256,256);g.lineTo(96,256);g.closePath();g.fill();
+  g.fillStyle='#98a383';g.fillRect(0,214,S,42);
+  g.fillStyle='#f6f6f6';g.fillRect(30,190,26,20);
+  g.fillStyle='#5d6d7a';g.fillRect(38,196,10,14);
+  var img=g.getImageData(0,0,S,S), px=img.data;
+  var coeffs=new Float32Array(NB*NB*3*64);
+  var f=new Float64Array(64),F=new Float64Array(64);
+  var bx,by,ch,s;
+  for(by=0;by<NB;by++)for(bx=0;bx<NB;bx++)for(ch=0;ch<3;ch++){
+    var off=(by*8)*S*4+(bx*8)*4+ch;
+    for(yy=0;yy<8;yy++)for(xx=0;xx<8;xx++)f[yy*8+xx]=px[off+yy*S*4+xx*4]-128;
+    for(vv=0;vv<8;vv++)for(uu=0;uu<8;uu++){
+      s=0;
+      for(yy=0;yy<8;yy++)for(xx=0;xx<8;xx++)s+=f[yy*8+xx]*c8[uu][xx]*c8[vv][yy];
+      F[vv*8+uu]=0.25*al[uu]*al[vv]*s;
+    }
+    var ci=((by*NB+bx)*3+ch)*64;
+    for(i=0;i<64;i++)coeffs[ci+i]=F[order[i][1]*8+order[i][0]];
+  }
+  var origCv=document.getElementById('jpegSrc');
+  origCv.getContext('2d').putImageData(img,0,0);
+  var outCv=document.getElementById('jpegOut'),octx=outCv.getContext('2d');
+  var slider=document.getElementById('jpegSlider'),raf=null;
+  function rebuild(){
+    raf=null;
+    var K=+slider.value;
+    document.getElementById('jpegVal').textContent=K+' / 64';
+    var oimg=octx.createImageData(S,S),op=oimg.data;
+    for(by=0;by<NB;by++)for(bx=0;bx<NB;bx++)for(ch=0;ch<3;ch++){
+      var ci2=((by*NB+bx)*3+ch)*64;
+      for(i=0;i<64;i++)F[order[i][1]*8+order[i][0]]=(i<K)?coeffs[ci2+i]:0;
+      var off2=(by*8)*S*4+(bx*8)*4+ch;
+      for(yy=0;yy<8;yy++)for(xx=0;xx<8;xx++){
+        s=0;
+        for(vv=0;vv<8;vv++)for(uu=0;uu<8;uu++)s+=0.25*al[uu]*al[vv]*F[vv*8+uu]*c8[uu][xx]*c8[vv][yy];
+        op[off2+yy*S*4+xx*4]=clamp255(s+128);
+        op[off2+yy*S*4+xx*4+3]=255;
+      }
+    }
+    octx.putImageData(oimg,0,0);
+  }
+  slider.addEventListener('input',function(){if(!raf)raf=requestAnimationFrame(rebuild);});
+  rebuild();
+})();
+</script>
+</body>
+</html>

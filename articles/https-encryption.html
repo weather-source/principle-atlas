@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浏览器和你说的悄悄话，是怎么保密的 · 原理图鉴</title>
+<meta name="description" content="当众交换一个只有彼此知道的秘密——HTTPS 的密钥交换与对称加密，两个交互演示看懂那把小锁的来历。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111111'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="../index.html">← 原理<em>图鉴</em></a>
+  </div>
+</header>
+
+<main class="container article-body">
+  <p class="article-kicker">第四期 · 网络加密</p>
+  <h1 class="article-title">浏览器和你说的悄悄话，是怎么保密的</h1>
+  <p class="article-lead">你登录网站时输入的密码，要途经十几台路由器才能到达服务器——每一台都理论上能偷看。可密码从来没有泄过密，因为浏览器和服务器在众目睽睽之下，表演了一个魔术：当众商量出一个只有他俩知道的秘密。</p>
+  <p class="article-meta">2 个交互演示 · 阅读约 8 分钟 · 所有演示在本地运行</p>
+
+  <h2><span class="sec-no">一</span>互联网是一群喊话的人</h2>
+  <p>先认清处境：你在网上发出的每一条数据，都不是"寄"过去的，而是像在广场上<b>一层层喊话接力</b>传过去的。Wi-Fi 路由器、运营商、骨干网节点……每个经手者原则上都能听到内容。早期的 HTTP 就是明信片——内容完全裸奔，连咖啡馆里蹭网的人都能看到你在登录什么。</p>
+  <figure>
+    <svg viewBox="0 0 680 150" role="img" aria-label="明信片接力示意图">
+      <rect x="30" y="45" width="150" height="60" rx="8" fill="#fff" stroke="#111" stroke-width="1.5"/>
+      <text x="105" y="70" text-anchor="middle" font-size="13" fill="#111">密码：123456</text>
+      <text x="105" y="92" text-anchor="middle" font-size="12" fill="#7a7a7a">任何人可见</text>
+      <path d="M195 75 L265 75" stroke="#111" stroke-width="1.5"/>
+      <path d="M255 69 L265 75 L255 81" fill="none" stroke="#111" stroke-width="1.5"/>
+      <g font-size="12" fill="#7a7a7a">
+        <text x="230" y="60" text-anchor="middle">路由器</text>
+        <text x="230" y="105" text-anchor="middle">运营商</text>
+      </g>
+      <rect x="280" y="45" width="150" height="60" rx="8" fill="#fff" stroke="#111" stroke-width="1.5"/>
+      <text x="355" y="70" text-anchor="middle" font-size="13" fill="#111">密码：123456</text>
+      <text x="355" y="92" text-anchor="middle" font-size="12" fill="#7a7a7a">任何人可见</text>
+      <path d="M445 75 L515 75" stroke="#111" stroke-width="1.5"/>
+      <path d="M505 69 L515 75 L505 81" fill="none" stroke="#111" stroke-width="1.5"/>
+      <rect x="530" y="45" width="120" height="60" rx="8" fill="#111"/>
+      <text x="590" y="80" text-anchor="middle" font-size="13" fill="#fff">服务器</text>
+    </svg>
+    <figcaption>明文传输的世界：内容像明信片，沿途每个"邮递员"都可以读。加密势在必行。</figcaption>
+  </figure>
+
+  <h2><span class="sec-no">二</span>最朴素的加密：一把钥匙锁到底</h2>
+  <p>最直观的加密思路是<b>对称加密</b>：双方共用同一把钥匙，发消息前用钥匙把内容打乱，收到后用同一把钥匙复原。最简单的例子是异或（XOR）：把消息的每个字符和钥匙的字符做一次异或运算——再异或一次就复原。</p>
+  <p>亲手试试这种"最古老的加密"：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 1 · 对称加密（XOR）体验</p>
+    <p class="demo-sub">改改消息或钥匙，看密文如何变化；再用同一把钥匙解回来</p>
+    <p class="field-label">要发送的消息</p>
+    <input type="text" id="xorMsg" value="今晚八点，老地方见" spellcheck="false">
+    <p class="field-label">钥匙（双方共享的秘密）</p>
+    <input type="text" id="xorKey" value="key-2026" spellcheck="false">
+    <p class="field-label">旁观者看到的密文</p>
+    <div class="xor-out" id="xorCipher"></div>
+    <p class="field-label">收到方用同一把钥匙解出的内容</p>
+    <div class="xor-out" id="xorBack"></div>
+    <p class="demo-note">把钥匙清空再改消息试试——没有钥匙，密文就是一堆无法辨认的乱码。加密本身不难，<b>难的是另一件事：这把钥匙怎么交到对方手上？</b>你在广场上喊话，没办法把钥匙"寄"过去——寄钥匙的瞬间，钥匙就公开了。这就是著名的<b>密钥分发难题</b>，困扰了密码学家几千年，直到 1976 年才被破解。</p>
+  </div>
+
+  <h2><span class="sec-no">三</span>神来之笔：当众调出一杯"只有你们俩知道的颜色"</h2>
+  <p>1976 年，Diffie 和 Hellman 想出了一个绝妙的主意，教科书里最爱用"调色"来打比方：<b>混合两种颜色很容易，但把混合色"拆开"几乎不可能</b>。利用这个不对称，双方可以当众商量出秘密。</p>
+  <p>规则：先公开约定一个"底色"；然后你和一个朋友各自心里偷偷选一个"秘密色"，把"底色 + 自己的秘密色"混好后<b>大声宣布</b>；最后，把对方的公开混合色拿回来，再混上自己的秘密色——奇迹发生了：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 2 · 颜色版密钥交换（Diffie–Hellman）</p>
+    <p class="demo-sub">分别为你和服务器各选一个秘密色，看双方如何当众调出同一个颜色</p>
+    <p class="field-label">你（浏览器）选一个秘密色：</p>
+    <div class="swatch-row" id="rowA"></div>
+    <p class="field-label">服务器选一个秘密色：</p>
+    <div class="swatch-row" id="rowB"></div>
+    <p class="field-label">双方当众宣布的颜色（旁观者能看到的）：</p>
+    <div class="mix-line" id="linePublic"></div>
+    <p class="field-label">各自的最终结果：</p>
+    <div class="mix-line" id="lineFinal"></div>
+    <p class="demo-note">不管怎么选，你和服务器最终调出的颜色<b>总是相同</b>——这就是协商出来的会话密钥。而旁观者只看到了底色和两个混合色：<b>把颜色"拆"回两种成分在数学上做不到</b>（演示里用乘法混合，真实协议用的是模幂运算，同样的不对称、大得多的不可拆性）。秘密就这样当众诞生了。</p>
+  </div>
+
+  <h2><span class="sec-no">四</span>拼起来：HTTPS 的完整流程</h2>
+  <p>真实世界的 HTTPS（TLS 协议）就是上面两招的组合拳，外加一道防伪手续：</p>
+  <table class="compare">
+    <tr><th>阶段</th><th>做了什么</th><th>解决什么问题</th></tr>
+    <tr><td>验明正身</td><td>服务器出示证书（由权威机构签名背书）</td><td>防止"李鬼"冒充真网站</td></tr>
+    <tr><td>密钥交换</td><td>Diffie–Hellman（当众算出共享秘密）</td><td>密钥分发难题</td></tr>
+    <tr><td>对称加密</td><td>用协商出的密钥 + AES 加密全部通信</td><td>内容保密，且对称加密速度快</td></tr>
+    <tr><td>完整性校验</td><td>每条消息附带"指纹"，被篡改立刻露馅</td><td>防止中途偷改内容</td></tr>
+  </table>
+  <p>所以地址栏那把小锁的含义是：<b>你们俩刚刚在几千个旁观者的注视下，协商出了一把只有你们知道的钥匙，之后所有悄悄话都用它加密。</b>整个过程的数学核心只有一条——存在某些运算，"正向做"轻而易举，"反着拆"在可接受的时间内根本做不到。非对称的世界，就是这么不讲道理。</p>
+
+  <div class="callout"><b>一句话记住：</b>非对称加密用来"当众约钥匙"，对称加密用来"偷偷传内容"。HTTPS = 前者开头 + 后者跑全程。</div>
+
+  <nav class="article-nav">
+    <a href="gps-positioning.html">← 上一篇：手机是怎么知道你在哪的</a>
+    <span>下一篇：更多原理制作中</span>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>原理图鉴 · 交互式科普</p>
+    <p>纯静态站点，所有演示在浏览器本地运行。</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  /* ---------- 演示 1：XOR ---------- */
+  var msgEl=document.getElementById('xorMsg');
+  var keyEl=document.getElementById('xorKey');
+  function xorWith(str,key){
+    var out=[];
+    for(var i=0;i<str.length;i++)out.push(str.charCodeAt(i)^key.charCodeAt(i%key.length));
+    return out;
+  }
+  function toHex(bytes){return bytes.map(function(b){return b.toString(16);}).join(' ');}
+  function render(){
+    var m=msgEl.value,k=keyEl.value;
+    var cipher;
+    if(!k){cipher=m?m.split('').map(function(){return '??';}):[];}
+    else{cipher=xorWith(m,k);}
+    document.getElementById('xorCipher').textContent=toHex(cipher)||'（空）';
+    var back;
+    if(!k){back='（钥匙被拿走了——谁也解不开，包括你自己）';}
+    else{back=xorWith(m,k).length?String.fromCharCode.apply(null,xorWith(m,k)):'（空）';}
+    document.getElementById('xorBack').textContent=back;
+  }
+  msgEl.addEventListener('input',render);
+  keyEl.addEventListener('input',render);
+  render();
+
+  /* ---------- 演示 2：Diffie–Hellman 颜色混合 ---------- */
+  var BASE=[255,213,79];
+  var PAL=[
+    {name:'红',rgb:[231,76,60]},
+    {name:'蓝',rgb:[52,152,219]},
+    {name:'绿',rgb:[46,204,113]},
+    {name:'紫',rgb:[155,89,182]},
+    {name:'橙',rgb:[230,126,34]},
+    {name:'青',rgb:[26,188,156]}
+  ];
+  var secA=0,secB=1;
+  function css(c){return 'rgb('+c[0]+','+c[1]+','+c[2]+')';}
+  function mix(a,b){return [Math.round(a[0]*b[0]/255),Math.round(a[1]*b[1]/255),Math.round(a[2]*b[2]/255)];}
+  function chip(c,label){
+    var h='<span class="mix-chip" style="background:'+css(c)+'"></span>';
+    if(label)h+='<span class="mix-label">'+label+'</span>';
+    return h;
+  }
+  function buildRow(id,side,sel){
+    var row=document.getElementById(id);
+    row.innerHTML='';
+    PAL.forEach(function(p,idx){
+      var b=document.createElement('button');
+      b.className='swatch'+(idx===sel?' sel':'');
+      b.style.background=css(p.rgb);
+      b.title=p.name;
+      b.addEventListener('click',function(){
+        if(side==='A')secA=idx;else secB=idx;
+        buildRow('rowA','A',secA);buildRow('rowB','B',secB);
+        render();
+      });
+      row.appendChild(b);
+    });
+  }
+  function render(){
+    var a=PAL[secA].rgb,b=PAL[secB].rgb;
+    var pubA=mix(BASE,a),pubB=mix(BASE,b);
+    var finalA=mix(pubA,b),finalB=mix(pubB,a);
+    document.getElementById('linePublic').innerHTML=
+      chip(BASE,'公开底色')+ '<span class="mix-plus">+</span>'
+      +chip(pubA,'你宣布的混合色')+ '<span class="mix-plus">+</span>'
+      +chip(pubB,'服务器宣布的混合色');
+    document.getElementById('lineFinal').innerHTML=
+      chip(finalA,'你的秘密色 + 对方公开色 =')+ '<span class="mix-plus"></span>'
+      +chip(finalA,'双方一致')+ '<span class="mix-plus">=</span>'
+      +chip(finalB,'服务器的秘密色 + 对方公开色 =')+ '<span class="mix-plus"></span>'
+      +chip(finalB,'双方一致');
+  }
+  buildRow('rowA','A',secA);
+  buildRow('rowB','B',secB);
+  render();
+})();
+</script>
+</body>
+</html>
