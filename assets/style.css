@@ -1,0 +1,74 @@
+:root{
+  --bg:#fafaf7; --surface:#ffffff; --ink:#232320; --muted:#6b6a64; --line:#e5e3da;
+  --accent:#0f6e56; --accent-soft:#e1f5ee; --blue:#185fa5; --red:#a32d2d;
+  --mono:ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;}
+.container{max-width:760px;margin:0 auto;padding:0 22px;}
+
+.site-header{border-bottom:1px solid var(--line);padding:22px 0;}
+.logo{font-size:20px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:1px;}
+.logo em{font-style:normal;color:var(--accent);}
+.tagline{margin:4px 0 0;font-size:14px;color:var(--muted);}
+
+.hero{padding:60px 0 6px;}
+.hero h1{font-size:34px;line-height:1.35;margin:0 0 14px;}
+.hero p{font-size:17px;color:var(--muted);margin:0;max-width:560px;}
+
+.article-grid{display:grid;grid-template-columns:1fr;gap:16px;padding:44px 0 72px;}
+.card{display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 28px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s;}
+.card:hover{border-color:var(--accent);}
+.card:not(.disabled):hover{transform:translateY(-2px);}
+.card-badge{display:inline-block;font-size:12px;color:var(--accent);background:var(--accent-soft);padding:2px 12px;border-radius:99px;margin-bottom:12px;}
+.card.disabled{opacity:.55;cursor:default;}
+.card h2{margin:0 0 8px;font-size:21px;line-height:1.4;}
+.card p{margin:0 0 12px;font-size:14.5px;color:var(--muted);}
+.card-meta{font-size:12.5px;color:var(--muted);}
+.card-meta b{color:var(--accent);font-weight:500;}
+
+.site-footer{border-top:1px solid var(--line);padding:26px 0;font-size:13px;color:var(--muted);}
+.site-footer p{margin:0 0 4px;}
+
+/* ---------- 文章页 ---------- */
+.article-kicker{font-size:13px;color:var(--accent);letter-spacing:2px;margin:46px 0 8px;}
+.article-title{font-size:33px;line-height:1.35;margin:0 0 16px;}
+.article-lead{font-size:17px;color:var(--muted);margin:0 0 18px;}
+.article-meta{font-size:13px;color:var(--muted);margin:0 0 46px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+.article-body h2{font-size:23px;margin:58px 0 16px;}
+.article-body h2 .sec-no{color:var(--accent);margin-right:10px;font-size:18px;}
+.article-body p{font-size:16px;margin:0 0 16px;}
+.article-body p b{font-weight:600;}
+figure{margin:28px 0;}
+figcaption{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.7;}
+.callout{background:var(--accent-soft);border-radius:12px;padding:16px 20px;font-size:14.5px;margin:22px 0;}
+.callout b{color:var(--accent);font-weight:600;}
+
+/* ---------- 交互演示 ---------- */
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:30px 0;}
+.demo-title{font-size:15px;font-weight:600;margin:0 0 4px;}
+.demo-sub{font-size:13px;color:var(--muted);margin:0 0 16px;}
+.demo-controls{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.demo-controls label{font-size:14px;white-space:nowrap;}
+.demo-controls input[type=range]{flex:1;min-width:140px;accent-color:var(--accent);}
+.demo-value{font-size:14px;font-weight:600;min-width:3em;text-align:right;font-variant-numeric:tabular-nums;}
+.demo svg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;}
+.demo-note{font-size:13.5px;color:var(--muted);margin:14px 0 0;line-height:1.75;}
+.check{display:inline-flex;align-items:center;gap:7px;font-size:14px;margin-right:16px;cursor:pointer;}
+.check input{accent-color:var(--accent);}
+.sizebar{height:14px;background:#eeede6;border-radius:99px;overflow:hidden;margin-top:16px;}
+.sizebar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .25s;}
+.size-label{font-size:13px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums;}
+.warn{color:var(--red);}
+
+/* 对比表 */
+.compare{width:100%;border-collapse:collapse;margin:24px 0;font-size:14.5px;}
+.compare th,.compare td{border:1px solid var(--line);padding:10px 14px;text-align:left;}
+.compare th{background:var(--surface);font-weight:600;}
+.compare td{color:var(--muted);}
+.compare td:first-child{color:var(--ink);}
+
+.article-nav{display:flex;justify-content:space-between;margin:64px 0 48px;padding-top:20px;border-top:1px solid var(--line);font-size:14.5px;}
+.article-nav a{color:var(--accent);text-decoration:none;}
+.article-nav a:hover{text-decoration:underline;}

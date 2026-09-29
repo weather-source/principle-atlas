@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>声音是怎么变成 MP3 的 · 原理图鉴</title>
+<meta name="description" content="从空气里的一条波，到手机里的音乐文件——采样、量化、压缩，三个交互演示看懂数字音频的全部秘密。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f6e56'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <a class="logo" href="../index.html">← 原理<em>图鉴</em></a>
+  </div>
+</header>
+
+<main class="container article-body">
+  <p class="article-kicker">第一期 · 数字音频</p>
+  <h1 class="article-title">声音是怎么变成 MP3 的</h1>
+  <p class="article-lead">你按下播放键，扬声器里的薄膜开始振动，一首歌就这样流淌出来。但在这之前，它只是一串数字。这篇文章讲清楚：声音是如何被变成数字的，MP3 又凭什么把文件缩小十倍。</p>
+  <p class="article-meta">3 个交互演示 · 阅读约 8 分钟 · 所有演示在本地运行</p>
+
+  <h2><span class="sec-no">一</span>声音是一条曲线</h2>
+  <p>声音的本质是振动。吉他弦振动推动空气，空气像弹簧一样被压紧又松开，这股"压紧—松开"的涟漪传到耳膜，你就听见了声音。麦克风做的事正好相反：把空气的振动原封不动地画成一条<b>电压曲线</b>——压得越紧，电压越高。</p>
+  <figure>
+    <svg viewBox="0 0 680 190" role="img" aria-label="声音波形示意图">
+      <line x1="0" y1="95" x2="680" y2="95" stroke="#e5e3da" stroke-width="1"/>
+      <polyline fill="none" stroke="#0f6e56" stroke-width="2.5"
+        points="0,95 20,55 40,20 60,32 80,95 100,158 120,170 140,138 160,95 180,52 200,18 220,30 240,95 260,160 280,172 300,140 320,95 340,50 360,16 380,28 400,95 420,162 440,174 460,142 480,95 500,48 520,14 540,26 560,95 580,164 600,176 620,144 640,95 660,46 680,12"/>
+      <text x="12" y="30" font-size="13" fill="#6b6a64">电压高 = 空气被压紧</text>
+      <text x="12" y="176" font-size="13" fill="#6b6a64">电压低 = 空气变稀疏</text>
+    </svg>
+    <figcaption>一段真实的声音，在麦克风眼里就是这样一条上下起伏的曲线。曲线足够平滑，数值却有无穷多个——问题就出在这里。</figcaption>
+  </figure>
+  <p>这条曲线上的每个时刻都有一个电压值，而且<b>任意两个时刻之间还有无穷多个值</b>。计算机存不了无穷多个数，所以数字化要做的第一件事就是：想办法用有限个数字，把这条曲线"装"起来。</p>
+
+  <h2><span class="sec-no">二</span>采样：每秒拍 44,100 张快照</h2>
+  <p>第一个思路很直白：不记录整条曲线，而是<b>每隔一小段时间，记一个数</b>。这叫采样。CD 音质的标准是每秒采样 44,100 次——相当于每秒给这条曲线拍 44,100 张快照。</p>
+  <p>那快照拍得稀一点行不行？拍得越稀，文件越小，但丢掉的细节越多。下面的演示里，灰虚线是原始声波，蓝点是采样记录下的值，绿线是只凭这些点还原出来的波形。把滑块往左拖，自己找找"开始走样"的临界点：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 1 · 采样率与失真</p>
+    <p class="demo-sub">拖动滑块改变每周期采样点数，观察还原波形何时开始走样</p>
+    <div class="demo-controls">
+      <label for="d1Slider">每周期采样点</label>
+      <input type="range" id="d1Slider" min="3" max="60" value="24">
+      <span class="demo-value" id="d1Val">24</span>
+    </div>
+    <svg id="d1Svg" viewBox="0 0 680 210">
+      <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
+      <polyline id="d1True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d1Recon" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
+      <g id="d1Dots"></g>
+      <text id="d1Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">采样点太少——波形已经无法还原，这就是失真</text>
+    </svg>
+    <p class="demo-note">奈奎斯特定理给出了精确答案：<b>采样率必须至少是声音中最高频率的两倍</b>。人耳听上限约 20,000Hz，所以 44,100 次/秒刚好够用——这不是拍脑袋定的，是算出来的。</p>
+  </div>
+
+  <h2><span class="sec-no">三</span>量化：把无限细的刻度变粗</h2>
+  <p>采样解决了"记多少个"，还有第二个问题：每个数记多准？电压是连续的，小数点后有无穷位。干脆<b>把刻度做粗</b>——比如只用 256 级刻度，测到的值四舍五入到最近的刻度上。这叫量化。</p>
+  <p>刻度越粗，需要的数字位数越少，但"四舍五入"丢掉的误差越大。把滑块拖到最左，看看粗刻度会把声音变成什么样：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 2 · 量化位数与噪声</p>
+    <p class="demo-sub">拖动滑块改变量化位数（刻度数 = 2 的位数次方），绿线是量化后能记录下来的形状</p>
+    <div class="demo-controls">
+      <label for="d2Slider">量化位数</label>
+      <input type="range" id="d2Slider" min="1" max="8" value="8">
+      <span class="demo-value" id="d2Val">8 bit</span>
+    </div>
+    <svg id="d2Svg" viewBox="0 0 680 210">
+      <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
+      <polyline id="d2True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d2Quant" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
+      <text id="d2Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">只剩 2 级刻度——平滑的曲线被压成了方块波，误差就是"沙沙"的量化噪声</text>
+    </svg>
+    <p class="demo-note">CD 用 <b>16 bit</b>（65,536 级刻度），量化噪声已经小到听不见。每个采样点存 16 位、每秒 44,100 个点——这就是为什么 CD 音质的原始数据（WAV）那么大：一首 4 分钟的歌，光数据就要 <b>40MB 左右</b>。MP3 登场之前，先得有人把这块大石头搬小。</p>
+  </div>
+
+  <h2><span class="sec-no">四</span>压缩：扔掉你听不见的部分</h2>
+  <p>到这一步为止，采样和量化都是"老实人"干的事——一个数都不丢，WAV 文件就是声音的完整复印件。MP3 的聪明之处在于它开始<b>耍滑头</b>：它扔数据，但专挑你听不见的扔。</p>
+  <p>一段真实的音乐可以拆成很多层不同频率的成分：低频是主体，中频是泛音，高频是细节的"沙沙感"。关键是——<b>并不是每一层都同等重要</b>。下面的演示里，勾选或取消各个成分，看看波形和你"文件大小"的变化：</p>
+
+  <div class="demo">
+    <p class="demo-title">演示 3 · 分层扔数据</p>
+    <p class="demo-sub">取消勾选以"扔掉"一层成分，绿线是剩下的成分能合成的波形</p>
+    <div class="demo-controls">
+      <label class="check"><input type="checkbox" id="d3c0" checked> 低频主体</label>
+      <label class="check"><input type="checkbox" id="d3c1" checked> 中频泛音</label>
+      <label class="check"><input type="checkbox" id="d3c2" checked> 高频细节</label>
+    </div>
+    <svg id="d3Svg" viewBox="0 0 680 210">
+      <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
+      <polyline id="d3True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d3Recon" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
+      <text id="d3Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">全部扔掉了——剩下的只有安静</text>
+    </svg>
+    <div class="sizebar"><div class="sizebar-fill" id="d3Bar" style="width:100%"></div></div>
+    <p class="size-label" id="d3Size">保留数据 ≈ 100%</p>
+    <p class="demo-note">听起来怎么样？扔掉"高频细节"后波形毛刺少了，但作为音乐几乎没损失；继续扔"中频泛音"，波形开始明显"变瘦"。MP3 做的就是这件事，只是它判断"该扔哪层"的依据是一门叫<b>心理声学</b>的学问：人耳对强信号旁边的小声音不敏感（掩蔽效应），这些部分哪怕扔得很狠，你也听不出来。</p>
+  </div>
+
+  <div class="callout"><b>一个冷知识：</b>MP3 不是把声音"压缩小了"，而是把声音"删掉了一部分你恰好听不见的"。它是有损压缩——每次转 MP3，丢掉的信息就永远回不来了。</div>
+
+  <h2><span class="sec-no">五</span>拼起来</h2>
+  <p>现在把三步串成一条流水线，你就彻底看懂了一首歌的诞生：</p>
+  <table class="compare">
+    <tr><th>阶段</th><th>做了什么</th><th>代价</th></tr>
+    <tr><td>麦克风</td><td>把空气振动画成连续电压曲线</td><td>还存不进计算机</td></tr>
+    <tr><td>采样</td><td>每秒记录 44,100 个瞬时值</td><td>点与点之间的细节没了</td></tr>
+    <tr><td>量化</td><td>每个值四舍五入到 65,536 级刻度</td><td>产生极轻微的量化噪声</td></tr>
+    <tr><td>到此为止</td><td>得到 WAV（无损）</td><td>4 分钟 ≈ 40MB</td></tr>
+    <tr><td>MP3 编码</td><td>用心理声学模型挑"听不见的"下手</td><td>4 分钟 ≈ <b style="color:var(--accent)">5MB</b>，听感几乎无差</td></tr>
+  </table>
+  <p>所以下次按下播放键，你可以想象：扬声器里那圈薄膜，正在忠实地重演一条四十多年前就被"拍成快照、粗粗刻度、再删掉三分之一"的曲线。数字音频的全部秘密，就是<b>用聪明的丢失，换十倍的小巧</b>。</p>
+
+  <nav class="article-nav">
+    <a href="../index.html">← 回到目录</a>
+    <span style="color:var(--muted)">下一篇：一张图片是怎么被压缩的（制作中）</span>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>原理图鉴 · 交互式科普</p>
+    <p>纯静态站点，所有演示在浏览器本地运行。</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var W=680, MID=105, A=78, CYC=2;
+  function base(x){return MID - A*Math.sin(2*Math.PI*CYC*x/W);}
+
+  /* 演示 1：采样 */
+  var s1=document.getElementById('d1Slider');
+  function draw1(){
+    var n=+s1.value;
+    document.getElementById('d1Val').textContent=n;
+    var tp='',i;
+    for(i=0;i<=W;i+=2) tp+=i+','+base(i).toFixed(1)+' ';
+    document.getElementById('d1True').setAttribute('points',tp);
+    var pts=[];
+    for(i=0;i<=n;i++){var x=W*i/n;pts.push([x,base(x)]);}
+    var rp='';
+    for(i=0;i<pts.length;i++) rp+=pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1)+' ';
+    document.getElementById('d1Recon').setAttribute('points',rp);
+    var ds='';
+    for(i=0;i<pts.length;i++) ds+='<circle cx="'+pts[i][0].toFixed(1)+'" cy="'+pts[i][1].toFixed(1)+'" r="4.5" fill="#185fa5" stroke="#fff" stroke-width="1.5"/>';
+    document.getElementById('d1Dots').innerHTML=ds;
+    document.getElementById('d1Hint').setAttribute('visibility', n<10?'visible':'hidden');
+  }
+  s1.addEventListener('input',draw1);
+  draw1();
+
+  /* 演示 2：量化 */
+  var s2=document.getElementById('d2Slider');
+  function draw2(){
+    var bits=+s2.value, L=Math.pow(2,bits);
+    document.getElementById('d2Val').textContent=bits+' bit';
+    var tp='',i;
+    for(i=0;i<=W;i+=2){var v=(base(i)-MID)/A;tp+=i+','+base(i).toFixed(1)+' ';}
+    document.getElementById('d2True').setAttribute('points',tp);
+    var rp='',prevY=null;
+    for(i=0;i<=W;i+=2){
+      var v2=(base(i)-MID)/A;
+      var vq=Math.round(v2*(L-1))/(L-1);
+      var yq=MID+vq*A;
+      if(prevY!==null && Math.abs(yq-prevY)>0.01) rp+=i+','+prevY.toFixed(1)+' ';
+      rp+=i+','+yq.toFixed(1)+' ';
+      prevY=yq;
+    }
+    document.getElementById('d2Quant').setAttribute('points',rp);
+    document.getElementById('d2Hint').setAttribute('visibility', bits<=2?'visible':'hidden');
+  }
+  s2.addEventListener('input',draw2);
+  draw2();
+
+  /* 演示 3：分层扔数据 */
+  var comps=[
+    {id:'d3c0',cycles:2, amp:66, weight:0.55},
+    {id:'d3c1',cycles:6, amp:34, weight:0.30},
+    {id:'d3c2',cycles:16,amp:18, weight:0.15}
+  ];
+  function draw3(){
+    var tp='',i,c,x;
+    for(i=0;i<=W;i+=2){
+      var y=MID;
+      for(c=0;c<3;c++) y-=comps[c].amp*Math.sin(2*Math.PI*comps[c].cycles*i/W);
+      tp+=i+','+y.toFixed(1)+' ';
+    }
+    document.getElementById('d3True').setAttribute('points',tp);
+    var rp='',kept=0,any=false;
+    for(i=0;i<=W;i+=2){
+      var y2=MID;
+      for(c=0;c<3;c++){
+        if(document.getElementById(comps[c].id).checked){
+          y2-=comps[c].amp*Math.sin(2*Math.PI*comps[c].cycles*i/W);
+        }
+      }
+      rp+=i+','+y2.toFixed(1)+' ';
+    }
+    document.getElementById('d3Recon').setAttribute('points',rp);
+    for(c=0;c<3;c++){
+      if(document.getElementById(comps[c].id).checked){kept+=comps[c].weight;any=true;}
+    }
+    document.getElementById('d3Bar').style.width=Math.max(kept*100,1.5)+'%';
+    var el=document.getElementById('d3Size');
+    if(!any){
+      el.innerHTML='<span class="warn">保留数据 ≈ 0% —— 只剩下安静</span>';
+      document.getElementById('d3Recon').setAttribute('points','');
+    }else{
+      el.textContent='保留数据 ≈ '+Math.round(kept*100)+'%';
+    }
+    document.getElementById('d3Hint').setAttribute('visibility', any?'hidden':'visible');
+  }
+  for(var c=0;c<3;c++) document.getElementById(comps[c].id).addEventListener('change',draw3);
+  draw3();
+})();
+</script>
+</body>
+</html>
