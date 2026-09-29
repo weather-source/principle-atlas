@@ -6,7 +6,7 @@
 <title>声音是怎么变成 MP3 的 · 原理图鉴</title>
 <meta name="description" content="从空气里的一条波，到手机里的音乐文件——采样、量化、压缩，三个交互演示看懂数字音频的全部秘密。">
 <link rel="stylesheet" href="../assets/style.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f6e56'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111111'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle' fill='%23fff' font-family='serif'%3E%E5%8E%9F%3C/text%3E%3C/svg%3E">
 </head>
 <body>
 <header class="site-header">
@@ -26,10 +26,10 @@
   <figure>
     <svg viewBox="0 0 680 190" role="img" aria-label="声音波形示意图">
       <line x1="0" y1="95" x2="680" y2="95" stroke="#e5e3da" stroke-width="1"/>
-      <polyline fill="none" stroke="#0f6e56" stroke-width="2.5"
+      <polyline fill="none" stroke="#111111" stroke-width="2.5"
         points="0,95 20,55 40,20 60,32 80,95 100,158 120,170 140,138 160,95 180,52 200,18 220,30 240,95 260,160 280,172 300,140 320,95 340,50 360,16 380,28 400,95 420,162 440,174 460,142 480,95 500,48 520,14 540,26 560,95 580,164 600,176 620,144 640,95 660,46 680,12"/>
-      <text x="12" y="30" font-size="13" fill="#6b6a64">电压高 = 空气被压紧</text>
-      <text x="12" y="176" font-size="13" fill="#6b6a64">电压低 = 空气变稀疏</text>
+      <text x="12" y="30" font-size="13" fill="#7a7a7a">电压高 = 空气被压紧</text>
+      <text x="12" y="176" font-size="13" fill="#7a7a7a">电压低 = 空气变稀疏</text>
     </svg>
     <figcaption>一段真实的声音，在麦克风眼里就是这样一条上下起伏的曲线。曲线足够平滑，数值却有无穷多个——问题就出在这里。</figcaption>
   </figure>
@@ -49,10 +49,10 @@
     </div>
     <svg id="d1Svg" viewBox="0 0 680 210">
       <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
-      <polyline id="d1True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
-      <polyline id="d1Recon" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
+      <polyline id="d1True" fill="none" stroke="#c4c4c4" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d1Recon" fill="none" stroke="#111111" stroke-width="2.5"/>
       <g id="d1Dots"></g>
-      <text id="d1Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">采样点太少——波形已经无法还原，这就是失真</text>
+      <text id="d1Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#111111" visibility="hidden">采样点太少——波形已经无法还原，这就是失真</text>
     </svg>
     <p class="demo-note">奈奎斯特定理给出了精确答案：<b>采样率必须至少是声音中最高频率的两倍</b>。人耳听上限约 20,000Hz，所以 44,100 次/秒刚好够用——这不是拍脑袋定的，是算出来的。</p>
   </div>
@@ -71,9 +71,9 @@
     </div>
     <svg id="d2Svg" viewBox="0 0 680 210">
       <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
-      <polyline id="d2True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
-      <polyline id="d2Quant" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
-      <text id="d2Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">只剩 2 级刻度——平滑的曲线被压成了方块波，误差就是"沙沙"的量化噪声</text>
+      <polyline id="d2True" fill="none" stroke="#c4c4c4" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d2Quant" fill="none" stroke="#111111" stroke-width="2.5"/>
+      <text id="d2Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#111111" visibility="hidden">只剩 2 级刻度——平滑的曲线被压成了方块波，误差就是"沙沙"的量化噪声</text>
     </svg>
     <p class="demo-note">CD 用 <b>16 bit</b>（65,536 级刻度），量化噪声已经小到听不见。每个采样点存 16 位、每秒 44,100 个点——这就是为什么 CD 音质的原始数据（WAV）那么大：一首 4 分钟的歌，光数据就要 <b>40MB 左右</b>。MP3 登场之前，先得有人把这块大石头搬小。</p>
   </div>
@@ -92,9 +92,9 @@
     </div>
     <svg id="d3Svg" viewBox="0 0 680 210">
       <line x1="0" y1="105" x2="680" y2="105" stroke="#e5e3da" stroke-width="1"/>
-      <polyline id="d3True" fill="none" stroke="#b4b2a9" stroke-width="1.5" stroke-dasharray="5 5"/>
-      <polyline id="d3Recon" fill="none" stroke="#0f6e56" stroke-width="2.5"/>
-      <text id="d3Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#a32d2d" visibility="hidden">全部扔掉了——剩下的只有安静</text>
+      <polyline id="d3True" fill="none" stroke="#c4c4c4" stroke-width="1.5" stroke-dasharray="5 5"/>
+      <polyline id="d3Recon" fill="none" stroke="#111111" stroke-width="2.5"/>
+      <text id="d3Hint" x="340" y="192" text-anchor="middle" font-size="13" fill="#111111" visibility="hidden">全部扔掉了——剩下的只有安静</text>
     </svg>
     <div class="sizebar"><div class="sizebar-fill" id="d3Bar" style="width:100%"></div></div>
     <p class="size-label" id="d3Size">保留数据 ≈ 100%</p>
@@ -111,7 +111,7 @@
     <tr><td>采样</td><td>每秒记录 44,100 个瞬时值</td><td>点与点之间的细节没了</td></tr>
     <tr><td>量化</td><td>每个值四舍五入到 65,536 级刻度</td><td>产生极轻微的量化噪声</td></tr>
     <tr><td>到此为止</td><td>得到 WAV（无损）</td><td>4 分钟 ≈ 40MB</td></tr>
-    <tr><td>MP3 编码</td><td>用心理声学模型挑"听不见的"下手</td><td>4 分钟 ≈ <b style="color:var(--accent)">5MB</b>，听感几乎无差</td></tr>
+    <tr><td>MP3 编码</td><td>用心理声学模型挑"听不见的"下手</td><td>4 分钟 ≈ <b>5MB</b>，听感几乎无差</td></tr>
   </table>
   <p>所以下次按下播放键，你可以想象：扬声器里那圈薄膜，正在忠实地重演一条四十多年前就被"拍成快照、粗粗刻度、再删掉三分之一"的曲线。数字音频的全部秘密，就是<b>用聪明的丢失，换十倍的小巧</b>。</p>
 
@@ -147,7 +147,7 @@
     for(i=0;i<pts.length;i++) rp+=pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1)+' ';
     document.getElementById('d1Recon').setAttribute('points',rp);
     var ds='';
-    for(i=0;i<pts.length;i++) ds+='<circle cx="'+pts[i][0].toFixed(1)+'" cy="'+pts[i][1].toFixed(1)+'" r="4.5" fill="#185fa5" stroke="#fff" stroke-width="1.5"/>';
+    for(i=0;i<pts.length;i++) ds+='<circle cx="'+pts[i][0].toFixed(1)+'" cy="'+pts[i][1].toFixed(1)+'" r="4.5" fill="#111111" stroke="#fff" stroke-width="1.5"/>';
     document.getElementById('d1Dots').innerHTML=ds;
     document.getElementById('d1Hint').setAttribute('visibility', n<10?'visible':'hidden');
   }
